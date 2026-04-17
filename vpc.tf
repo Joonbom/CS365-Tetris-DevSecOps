@@ -55,3 +55,13 @@ resource "aws_route_table_association" "rt-association2" {
   subnet_id      = aws_subnet.public-subnet2.id
 }
 
+data "aws_subnet" "subnet_az1" {
+  filter {
+    name   = "vpc-id"
+    values = [data.aws_vpc.vpc.id]
+  }
+  filter {
+    name   = "availability-zone"
+    values = ["us-east-1a"]
+  }
+}
