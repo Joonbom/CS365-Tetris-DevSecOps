@@ -1,6 +1,6 @@
 terraform {
   backend "s3" {
-    bucket         = "cs365-eks-tf-bucket"
+    bucket         = "cs365-eks-tf-bucket-1"
     region         = "us-east-1"
     key            = "End-to-End-Kubernetes-DevSecOps-Tetris-Project/EKS-TF/terraform.tfstate"
     dynamodb_table = "terraform-lock"
