@@ -1,10 +1,11 @@
 terraform {
   backend "s3" {
-    bucket       = "dev-aman-tf-bucket"
-    region       = "us-east-1"
-    key          = "End-to-End-Kubernetes-DevSecOps-Tetris-Project/EKS-TF/terraform.tfstate"
-    use_lockfile = true
-    encrypt      = true
+    bucket         = "cs365-eks-tf-bucket"
+    region         = "us-east-1"
+    key            = "End-to-End-Kubernetes-DevSecOps-Tetris-Project/EKS-TF/terraform.tfstate"
+    dynamodb_table = "terraform-lock"
+    use_lockfile   = true
+    encrypt        = true
   }
   required_version = ">=1.14.0"
   required_providers {

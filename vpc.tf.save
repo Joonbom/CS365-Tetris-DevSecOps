@@ -4,37 +4,34 @@ data "aws_vpc" "vpc" {
 
 data "aws_internet_gateway" "igw" {
   filter {
-    name   = "attachment.vpc-id"
-    values = [data.aws_vpc.vpc.id]
+    name   = "tag:Name"
+    values = [var.igw-name]
   }
+
 }
 
-data "aws_subnets" "subnets" {
+data "aws_subnet" "subnet" {
   filter {
-    name   = "vpc-id"
-    values = [data.aws_vpc.vpc.id]
+    name   = "tag:Name"
+    values = [var.subnet-name]
   }
 }
 
 data "aws_security_group" "sg-default" {
   filter {
-    name   = "group-name"
-    values = ["default"]
+    name   = "tag:Name"
+    values = [var.security-group-name]
   }
-  filter {
-    name   = "vpc-id"
-    values = [data.aws_vpc.vpc.id]
-  }  
 }
 
 resource "aws_subnet" "public-subnet2" {
   vpc_id                  = data.aws_vpc.vpc.id
-  cidr_block              = "172.31.100.0/24"
+  cidr_block              = "10.0.2.0/24"
   availability_zone       = "us-east-1b"
   map_public_ip_on_launch = true
 
   tags = {
-    Name = "public-subnet-2"
+    Name = var.subnet-name2
   }
 }
 
@@ -46,7 +43,7 @@ resource "aws_route_table" "rt2" {
   }
 
   tags = {
-    Name = "rt-2"
+    Name = var.rt-name2
   }
 }
 
@@ -54,4 +51,3 @@ resource "aws_route_table_association" "rt-association2" {
   route_table_id = aws_route_table.rt2.id
   subnet_id      = aws_subnet.public-subnet2.id
 }
-
