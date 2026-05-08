@@ -82,7 +82,7 @@ pipeline {
         }
         stage("TRIVY Image Scan") {
             steps {
-                sh 'trivy image neon6609612111/tetrisv2:${BUILD_NUMBER} > trivyimage.txt'
+                sh 'trivy image --exit-code 1 --severity HIGH,CRITICAL neon6609612111/tetrisv2:${BUILD_NUMBER}'
             }
         }
         stage('Checkout Code') {
