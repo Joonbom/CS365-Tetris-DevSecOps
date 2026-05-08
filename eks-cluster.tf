@@ -1,7 +1,3 @@
-data "aws_iam_role" "lab_role" {
-  name = "LabRole"
-}
-
 resource "aws_eks_cluster" "eks-cluster" {
   name     = var.cluster-name
 
