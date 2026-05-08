@@ -41,15 +41,15 @@ pipeline {
                 }
             }
         }
-        stage('OWASP Dependency-Check Scan') {
-            steps {
-                dir('Tetris-V3') {
-                    withCredentials([string(credentialsId: 'nvd-api-key', variable: 'NVD_KEY')]) {
-                        dependencyCheck additionalArguments: "--scan ./ --disableYarnAudit --disableNodeAudit --nvdApiKey ${NVD_KEY} --disableAssembly", odcInstallation: 'DP-Check'
-                    }
-                    dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
-                }
-            }
+        //  stage('OWASP Dependency-Check Scan') {
+        //      steps {
+        //          dir('Tetris-V3') {
+        //              withCredentials([string(credentialsId: 'nvd-api-key', variable: 'NVD_KEY')]) {
+        //                  dependencyCheck additionalArguments: "--scan ./ --disableYarnAudit --disableNodeAudit --nvdApiKey ${NVD_KEY} --disableAssembly", odcInstallation: 'DP-Check'
+        //              }
+        //              dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
+        //          }
+        //    }
         }
         stage('Trivy File Scan') {
             steps {

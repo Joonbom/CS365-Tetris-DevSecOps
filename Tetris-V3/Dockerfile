@@ -1,5 +1,5 @@
 # Use the official Node.js 14 image as the base image for Trivy Scan Failure
-FROM node:14.0.0
+FROM node:16.0.0
 
 # Set the working directory inside the container
 WORKDIR /app
