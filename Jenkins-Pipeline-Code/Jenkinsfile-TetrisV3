@@ -1,0 +1,119 @@
+pipeline {
+    agent any
+    tools {
+        nodejs 'nodejs'
+    }
+    environment  {
+        SCANNER_HOME=tool 'sonar-scanner'
+    }
+    stages {
+        stage('Cleaning Workspace') {
+            steps {
+                cleanWs()
+            }
+        }
+        stage('Checkout from Git') {
+            steps {
+                git branch: 'Jenkins-Pipeline', url: 'https://github.com/Joonbom/CS365-Tetris-DevSecOps.git'
+            }
+        }
+        stage('Sonarqube Analysis') {
+            steps {
+                dir('Tetris-V3') {
+                    withSonarQubeEnv('sonar-server') {
+                        sh ''' $SCANNER_HOME/bin/sonar-scanner -Dsonar.projectName=Tetris \
+                        -Dsonar.projectKey=Tetris '''
+                    }
+                }
+            }
+        }
+        stage('Quality Check') {
+            steps {
+                script {
+                    waitForQualityGate abortPipeline: false, credentialsId: 'sonar-token'
+                }
+            }
+        }
+        stage('Installing Dependencies') {
+            steps {
+                dir('Tetris-V3') {
+                    sh 'npm install'
+                }
+            }
+        }
+        stage('OWASP Dependency-Check Scan') {
+            steps {
+                dir('Tetris-V3') {
+                    withCredentials([string(credentialsId: 'nvd-api-key', variable: 'NVD_KEY')]) {
+                        dependencyCheck additionalArguments: "--scan ./ --disableYarnAudit --disableNodeAudit --nvdApiKey ${NVD_KEY} --disableAssembly", odcInstallation: 'DP-Check'
+                    }
+                    dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
+                }
+            }
+        }
+        stage('Trivy File Scan') {
+            steps {
+                dir('Tetris-V3') {
+                    sh 'trivy fs . > trivyfs.txt'
+                }
+            }
+        }
+        stage("Docker Image Build") {
+            steps {
+                script {
+                    dir('Tetris-V3') {
+                        withDockerRegistry(credentialsId: 'docker', toolName: 'docker') {
+                            sh 'docker system prune -f'
+                            sh 'docker build -t tetrisv1 .'
+                        }
+                    }
+                }
+            }
+        }
+        stage("Docker Image Pushing") {
+            steps {
+                script {
+                    withDockerRegistry(credentialsId: 'docker', toolName: 'docker') {
+                        sh 'docker tag tetrisv1 neon6609612111/tetrisv2:${BUILD_NUMBER}'
+                        sh 'docker push neon6609612111/tetrisv2:${BUILD_NUMBER}'
+                    }
+                }
+            }
+        }
+        stage("TRIVY Image Scan") {
+            steps {
+                sh 'trivy image neon6609612111/tetrisv2:${BUILD_NUMBER} > trivyimage.txt'
+            }
+        }
+        stage('Checkout Code') {
+            steps {
+                git branch: 'Jenkins-Pipeline', url: 'https://github.com/Joonbom/CS365-Tetris-DevSecOps.git'
+            }
+        }
+        stage('Update Deployment file') {
+            environment {
+                GIT_REPO_NAME = "CS365-Tetris-DevSecOps"
+                GIT_USER_NAME = "Joonbom"
+            }
+            steps {
+                dir('Manifest-file') {
+                    withCredentials([string(credentialsId: 'github', variable: 'GITHUB_TOKEN')]) {
+                        sh '''
+                            git config user.email "pattayawat.poo@dome.tu.ac.th"
+                            git config user.name "Pattayawat"
+                            BUILD_NUMBER=${BUILD_NUMBER}
+                            echo $BUILD_NUMBER
+                            imageTag=$(grep -oP '(?<=tetrisv1:)[^ ]+' deployment-service.yml)
+                            echo $imageTag
+                            git pull https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME} master --rebase
+                            sed -i "s/tetrisv2:${imageTag}/tetrisv1:${BUILD_NUMBER}/" deployment-service.yml
+                            git add deployment-service.yml
+                            git commit -m "Update deployment Image to version \${BUILD_NUMBER}"
+                            git push https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME} HEAD:master
+                        '''
+                    }
+                }
+            }
+        }
+    }
+}
