@@ -49,8 +49,8 @@ pipeline {
         //              }
         //              dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
         //          }
-        //    }
-        }
+        //      }
+        //  }
         stage('Trivy File Scan') {
             steps {
                 dir('Tetris-V3') {
