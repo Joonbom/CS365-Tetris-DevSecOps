@@ -8,6 +8,9 @@ dnf install -y git wget curl unzip
 # Install java 21
 dnf install -y java-21-amazon-corretto-devel
 
+# Install Git
+dnf install -y git
+
 # Install and configure Docker
 dnf install -y docker
 systemctl start docker
@@ -48,34 +51,13 @@ gpgkey=https://aquasecurity.github.io/trivy-repo/rpm/public.key
 EOF
 dnf install -y trivy
 
-# Download and Run OpenTofu install script
-sudo tee /etc/yum.repos.d/opentofu.repo > /dev/null <<'EOF'
-[opentofu]
-name=opentofu
-baseurl=https://packages.opentofu.org/opentofu/tofu/rpm_any/rpm_any/\$basearch
-repo_gpgcheck=0
-gpgcheck=1
-enabled=1
-gpgkey=https://get.opentofu.org/opentofu.gpg
-       https://packages.opentofu.org/opentofu/tofu/gpgkey
-sslverify=1
-sslcacert=/etc/pki/tls/certs/ca-bundle.crt
-metadata_expire=300
+# Install Terraform
+sudo yum install -y yum-utils shadow-utils
+sudo yum-config-manager --add-repo https://rpm.releases.hashicorp.com/AmazonLinux/hashicorp.repo
+sudo yum install terraform
 
-[opentofu-source]
-name=opentofu-source
-baseurl=https://packages.opentofu.org/opentofu/tofu/rpm_any/rpm_any/SRPMS
-repo_gpgcheck=0
-gpgcheck=1
-enabled=1
-gpgkey=https://get.opentofu.org/opentofu.gpg
-       https://packages.opentofu.org/opentofu/tofu/gpgkey
-sslverify=1
-sslcacert=/etc/pki/tls/certs/ca-bundle.crt
-metadata_expire=300
-EOF
-sudo yum update
-sudo yum install -y tofu
+# Install jq
+sudo yum install -y jq
 
 # Install kubectl
 curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
