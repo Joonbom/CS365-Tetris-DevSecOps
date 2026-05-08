@@ -105,6 +105,7 @@ pipeline {
                             echo $BUILD_NUMBER
                             imageTag=$(grep -oP '(?<=tetrisv1:)[^ ]+' deployment-service.yml)
                             echo $imageTag
+                            git pull https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME} master --rebase
                             sed -i "s/tetrisv2:${imageTag}/tetrisv1:${BUILD_NUMBER}/" deployment-service.yml
                             git add deployment-service.yml
                             git commit -m "Update deployment Image to version \${BUILD_NUMBER}"
