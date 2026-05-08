@@ -7,65 +7,50 @@ properties([
 
 pipeline {
     agent any
+
+    environment {
+        AWS_DEFAULT_REGION = 'us-east-1'
+    }
+
     stages {
         stage('Checkout from Git') {
             steps {
-                git branch: 'master', url: 'https://github.com/AmanPathak-DevOps/End-to-End-Kubernetes-DevSecOps-Tetris-Project.git'
+                git branch: 'infra/eks-cluster', url: 'https://github.com/Joonbom/CS365-Tetris-DevSecOps.git'
             }
         }
+
         stage('Initializing Terraform') {
             steps {
-                withAWS(credentials: 'aws-key', region: 'us-east-1') {
-                dir('EKS-TF') {
-                    script {
-                        sh 'terraform init'
-                    }
-                }
-                }
+                    sh 'terraform init -reconfigure'
             }
         }
+
         stage('Validate Terraform Code') {
             steps {
-                withAWS(credentials: 'aws-key', region: 'us-east-1') {
-                dir('EKS-TF') {
-                    script {
-                        sh 'terraform validate'
-                    }
-                }
-                }
+                    sh 'terraform validate'
             }
         }
+
         stage('Terraform Plan') {
             steps {
-                withAWS(credentials: 'aws-key', region: 'us-east-1') {
-                dir('EKS-TF') {
-                    script {
-                        sh "terraform plan -var-file=${params.'File-Name'}"
-                    }
-                }
-                }
+                    sh "terraform plan -var-file=${params.'File-Name'}"
             }
         }
+
         stage('Terraform Action') {
             steps {
-                withAWS(credentials: 'aws-key', region: 'us-east-1') {
-                script {
-                    echo "${params.'Terraform-Action'}"
-                    dir('EKS-TF') {
-                        script {
-                            if (params.'Terraform-Action' == 'plan') {
-                                sh "terraform plan -var-file=${params.'File-Name'}"
-                            } else if (params.'Terraform-Action' == 'apply') {
-                                sh "terraform apply -auto-approve -var-file=${params.'File-Name'}"
-                            } else if (params.'Terraform-Action' == 'destroy') {
-                                sh "terraform destroy -auto-approve -var-file=${params.'File-Name'}"
-                            } else {
-                                error "Invalid value for Terraform-Action: ${params.'Terraform-Action'}"
-                            }
+                    script {
+                        echo "Performing action: ${params.'Terraform-Action'}"
+                        if (params.'Terraform-Action' == 'plan') {
+                            sh "terraform plan -var-file=${params.'File-Name'}"
+                        } else if (params.'Terraform-Action' == 'apply') {
+                            sh "terraform apply -auto-approve -var-file=${params.'File-Name'}"
+                        } else if (params.'Terraform-Action' == 'destroy') {
+                            sh "terraform destroy -auto-approve -var-file=${params.'File-Name'}"
+                        } else {
+                            error "Invalid action: ${params.'Terraform-Action'}"
                         }
                     }
-                }
-                }
             }
         }
     }
