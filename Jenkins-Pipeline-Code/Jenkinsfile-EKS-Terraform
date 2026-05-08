@@ -1,0 +1,57 @@
+properties([
+    parameters([
+        string(defaultValue: 'variables.tfvars', description: 'Specify the file name', name: 'File-Name'),
+        choice(choices: ['plan', 'apply', 'destroy'], description: 'Select Terraform action', name: 'Terraform-Action')
+    ])
+])
+
+pipeline {
+    agent any
+
+    environment {
+        AWS_DEFAULT_REGION = 'us-east-1'
+    }
+
+    stages {
+        stage('Checkout from Git') {
+            steps {
+                git branch: 'infra/eks-cluster', url: 'https://github.com/Joonbom/CS365-Tetris-DevSecOps.git'
+            }
+        }
+
+        stage('Initializing Terraform') {
+            steps {
+                    sh 'terraform init -reconfigure'
+            }
+        }
+
+        stage('Validate Terraform Code') {
+            steps {
+                    sh 'terraform validate'
+            }
+        }
+
+        stage('Terraform Plan') {
+            steps {
+                    sh "terraform plan -var-file=${params.'File-Name'}"
+            }
+        }
+
+        stage('Terraform Action') {
+            steps {
+                    script {
+                        echo "Performing action: ${params.'Terraform-Action'}"
+                        if (params.'Terraform-Action' == 'plan') {
+                            sh "terraform plan -var-file=${params.'File-Name'}"
+                        } else if (params.'Terraform-Action' == 'apply') {
+                            sh "terraform apply -auto-approve -var-file=${params.'File-Name'}"
+                        } else if (params.'Terraform-Action' == 'destroy') {
+                            sh "terraform destroy -auto-approve -var-file=${params.'File-Name'}"
+                        } else {
+                            error "Invalid action: ${params.'Terraform-Action'}"
+                        }
+                    }
+            }
+        }
+    }
+}

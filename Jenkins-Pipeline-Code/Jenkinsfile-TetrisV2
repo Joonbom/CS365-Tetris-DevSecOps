@@ -19,7 +19,7 @@ pipeline {
         }
         stage('Sonarqube Analysis') {
             steps {
-                dir('Tetris-V1') {
+                dir('Tetris-V2') {
                     withSonarQubeEnv('sonar-server') {
                         sh ''' $SCANNER_HOME/bin/sonar-scanner -Dsonar.projectName=Tetris \
                         -Dsonar.projectKey=Tetris '''
@@ -36,14 +36,14 @@ pipeline {
         }
         stage('Installing Dependencies') {
             steps {
-                dir('Tetris-V1') {
+                dir('Tetris-V2') {
                     sh 'npm install'
                 }
             }
         }
         stage('OWASP Dependency-Check Scan') {
             steps {
-                dir('Tetris-V1') {
+                dir('Tetris-V2') {
                     withCredentials([string(credentialsId: 'nvd-api-key', variable: 'NVD_KEY')]) {
                         dependencyCheck additionalArguments: "--scan ./ --disableYarnAudit --disableNodeAudit --nvdApiKey ${NVD_KEY} --disableAssembly", odcInstallation: 'DP-Check'
                     }
@@ -53,7 +53,7 @@ pipeline {
         }
         stage('Trivy File Scan') {
             steps {
-                dir('Tetris-V1') {
+                dir('Tetris-V2') {
                     sh 'trivy fs . > trivyfs.txt'
                 }
             }
@@ -61,7 +61,7 @@ pipeline {
         stage("Docker Image Build") {
             steps {
                 script {
-                    dir('Tetris-V1') {
+                    dir('Tetris-V2') {
                         withDockerRegistry(credentialsId: 'docker', toolName: 'docker') {
                             sh 'docker system prune -f'
                             sh 'docker build -t tetrisv1 .'
@@ -74,15 +74,15 @@ pipeline {
             steps {
                 script {
                     withDockerRegistry(credentialsId: 'docker', toolName: 'docker') {
-                        sh 'docker tag tetrisv1 neon6609612111/tetrisv1:${BUILD_NUMBER}'
-                        sh 'docker push neon6609612111/tetrisv1:${BUILD_NUMBER}'
+                        sh 'docker tag tetrisv1 neon6609612111/tetrisv2:${BUILD_NUMBER}'
+                        sh 'docker push neon6609612111/tetrisv2:${BUILD_NUMBER}'
                     }
                 }
             }
         }
         stage("TRIVY Image Scan") {
             steps {
-                sh 'trivy image neon6609612111/tetrisv1:${BUILD_NUMBER} > trivyimage.txt'
+                sh 'trivy image neon6609612111/tetrisv2:${BUILD_NUMBER} > trivyimage.txt'
             }
         }
         stage('Checkout Code') {
@@ -105,7 +105,7 @@ pipeline {
                             echo $BUILD_NUMBER
                             imageTag=$(grep -oP '(?<=tetrisv1:)[^ ]+' deployment-service.yml)
                             echo $imageTag
-                            sed -i "s/tetrisv1:${imageTag}/tetrisv1:${BUILD_NUMBER}/" deployment-service.yml
+                            sed -i "s/tetrisv2:${imageTag}/tetrisv1:${BUILD_NUMBER}/" deployment-service.yml
                             git add deployment-service.yml
                             git commit -m "Update deployment Image to version \${BUILD_NUMBER}"
                             git push https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME} HEAD:master
