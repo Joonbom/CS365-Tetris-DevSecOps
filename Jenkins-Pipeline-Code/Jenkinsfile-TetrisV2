@@ -107,7 +107,7 @@ pipeline {
                             BUILD_NUMBER=${BUILD_NUMBER}
                             echo $BUILD_NUMBER
                             git pull https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME} master --rebase
-                            sed -i "s/tetrisv1:[0-9]*/tetrisv2:${BUILD_NUMBER}/" deployment-service.yml
+                            sed -i "s/tetrisv[0-9]:[0-9]*/tetrisv2:${BUILD_NUMBER}/" deployment-service.yml
                             git add deployment-service.yml
                             git commit -m "Update deployment Image to version \${BUILD_NUMBER}"
                             git push https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME} HEAD:master
