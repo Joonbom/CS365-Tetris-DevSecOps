@@ -6,7 +6,7 @@ terraform {
     }
   }
   backend "s3" {
-    bucket       = "tertis-tf-bucket-1"
+    bucket       = "tertis-tf-bucket"
     region       = "us-east-1"
     key          = "terraform.tfstate"
     encrypt      = true
