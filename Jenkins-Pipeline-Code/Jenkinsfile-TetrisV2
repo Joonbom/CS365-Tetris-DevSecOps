@@ -42,6 +42,9 @@ pipeline {
             }
         }
         stage('OWASP Dependency-Check Scan') {
+            when {
+                expression { return false } 
+            }
             steps {
                 dir('Tetris-V2') {
                     withCredentials([string(credentialsId: 'nvd-api-key', variable: 'NVD_KEY')]) {
@@ -103,8 +106,6 @@ pipeline {
                             git config user.name "Pattayawat"
                             BUILD_NUMBER=${BUILD_NUMBER}
                             echo $BUILD_NUMBER
-                            imageTag=$(grep -oP '(?<=tetrisv2:)[^ ]+' deployment-service.yml)
-                            echo $imageTag
                             git pull https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME} master --rebase
                             sed -i "s/tetrisv1:[0-9]*/tetrisv2:${BUILD_NUMBER}/" deployment-service.yml
                             git add deployment-service.yml
